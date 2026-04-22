@@ -1,108 +1,55 @@
-// ─── API client ─────────────────────────────────────────────────────────────
-// Single fetch wrapper every screen should use. It:
-//   1. Picks the right base URL automatically (dev web → :3000, native → env)
-//   2. Adds the x-auth-token header when a token is saved
-//   3. Parses JSON safely and surfaces structured errors
-//   4. Exposes BOTH styles:
-//        - apiClient<T>(path, options) — original signature used by legacy code
-//        - api.get/post/put/del(path, body) — new ergonomic shape
+// src/lib/apiClient.ts — Nova8-hosted auth client (Wave 18.15)
+// ─────────────────────────────────────────────────────────────────
+// DO NOT EDIT BY HAND. This file is auto-generated and auto-repaired
+// by the Nova8 TestFlight audit. Any change you make here will be
+// reverted the next time a developer clicks "Fix all" because the
+// server compares it to a canonical signature. If you need to change
+// API behavior, update the callers — not this client.
 //
-// Override with EXPO_PUBLIC_API_BASE_URL if you want to point at a hosted
-// backend (e.g. Railway / Fly). Without that, on web it auto-derives the
-// base URL from window.location and swaps :8081 (Expo dev) for :3000.
+// What this client does:
+//   1. Resolves the API base URL at runtime in this priority:
+//        a. Constants.expoConfig.extra.apiBaseUrl   (set by Nova8 at push)
+//        b. process.env.EXPO_PUBLIC_API_BASE_URL    (fallback)
+//        c. 'https://nova8.dev'                     (hard default)
+//   2. Reads the per-project API key + project ID from the same
+//      two sources (app.json extra / EXPO_PUBLIC_*).
+//   3. Sends 'x-nova8-project-key' on EVERY request (signup, signin,
+//      me, logout, delete). Without this header the persistent
+//      backend returns 401 'missing_project_key'.
+//   4. Stores the session token in AsyncStorage under 'app_token'
+//      and replays it as 'x-nova8-app-token' on authed calls.
+//      Never uses Authorization: Bearer.
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 
-const TOKEN_KEY = 'auth_token';
-const USER_KEY = 'auth_user';
-const ZUSTAND_PERSIST_KEY = 'macr-store'; // legacy Zustand persist slice
+const extra = (Constants?.expoConfig?.extra ?? {}) as Record<string, any>;
+const API_BASE = String(
+  extra.apiBaseUrl || process.env.EXPO_PUBLIC_API_BASE_URL || 'https://nova8.dev'
+).replace(/\/+$/, '');
+const PROJECT_ID = Number(
+  extra.projectId || process.env.EXPO_PUBLIC_PROJECT_ID || 0
+);
+const PROJECT_API_KEY = String(
+  extra.projectApiKey || process.env.EXPO_PUBLIC_PROJECT_API_KEY || ''
+);
+const AUTH_PREFIX = `/api/app/${PROJECT_ID}/auth`;
 
-// ─── Base URL ───────────────────────────────────────────────────────────────
-function resolveBaseUrl(): string {
-  const env = (process.env.EXPO_PUBLIC_API_BASE_URL || '').trim().replace(/\/+$/, '');
-  if (env) return env;
+const TOKEN_STORAGE_KEY = 'app_token';
 
-  if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location) {
-    const { protocol, hostname, port } = window.location;
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      return `${protocol}//${hostname}:3000`;
-    }
-    // E2B preview: hostname is like 8081-<sandbox>.e2b.app — swap prefix.
-    if (port === '8081' || hostname.startsWith('8081-')) {
-      const swapped = hostname.replace(/^8081-/, '3000-');
-      return `${protocol}//${swapped}`;
-    }
-    return `${protocol}//${hostname}${port ? ':' + port : ''}`;
-  }
-
-  return 'http://localhost:3000';
+export async function getAppToken(): Promise<string | null> {
+  try { return await AsyncStorage.getItem(TOKEN_STORAGE_KEY); } catch { return null; }
 }
 
-const BASE_URL = resolveBaseUrl();
-
-// ─── Token storage ──────────────────────────────────────────────────────────
-let cachedToken: string | null = null;
-
-/** Read the session token from whichever slot currently holds it.
- *  Priority: in-memory cache → auth_token key → zustand macr-store.sessionToken. */
-export async function getToken(): Promise<string | null> {
-  if (cachedToken !== null) return cachedToken;
+export async function setAppToken(token: string | null): Promise<void> {
   try {
-    const direct = await AsyncStorage.getItem(TOKEN_KEY);
-    if (direct) {
-      cachedToken = direct;
-      return cachedToken;
-    }
-    // Fallback: legacy Zustand persist slice.
-    const raw = await AsyncStorage.getItem(ZUSTAND_PERSIST_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      const tok = parsed?.state?.sessionToken;
-      if (typeof tok === 'string' && tok.length > 0) {
-        cachedToken = tok;
-        return cachedToken;
-      }
-    }
-  } catch {}
-  cachedToken = null;
-  return cachedToken;
-}
-
-export async function setToken(token: string | null): Promise<void> {
-  cachedToken = token;
-  try {
-    if (token) await AsyncStorage.setItem(TOKEN_KEY, token);
-    else await AsyncStorage.removeItem(TOKEN_KEY);
+    if (token) await AsyncStorage.setItem(TOKEN_STORAGE_KEY, token);
+    else await AsyncStorage.removeItem(TOKEN_STORAGE_KEY);
   } catch {}
 }
 
-/** Called from the sign-in/sign-up screens after a successful auth response so
- *  the in-memory cache picks up the new token immediately. */
-export function primeToken(token: string | null): void {
-  cachedToken = token;
-}
-
-export async function getStoredUser<T = any>(): Promise<T | null> {
-  try {
-    const raw = await AsyncStorage.getItem(USER_KEY);
-    return raw ? (JSON.parse(raw) as T) : null;
-  } catch {
-    return null;
-  }
-}
-
-export async function setStoredUser(user: unknown): Promise<void> {
-  try {
-    if (user) await AsyncStorage.setItem(USER_KEY, JSON.stringify(user));
-    else await AsyncStorage.removeItem(USER_KEY);
-  } catch {}
-}
-
-// ─── Core request ──────────────────────────────────────────────────────────
 export interface ApiError extends Error {
   status: number;
-  detail?: string;
   body?: any;
 }
 
@@ -110,152 +57,137 @@ export interface ApiClientOptions extends RequestInit {
   skipAuth?: boolean;
 }
 
-/**
- * Canonical fetch wrapper — the one every screen should call.
- *
- * Usage (both supported):
- *   const data = await apiClient<User>('/api/app/149/auth/me');
- *   const data = await apiClient<AuthResp>('/api/app/149/auth/login', {
- *     method: 'POST',
- *     body: JSON.stringify({ email, password }),
- *     skipAuth: true,
- *   });
- *
- * Or via the ergonomic shorthand:
- *   const data = await api.post<AuthResp>('/api/app/149/auth/login', { email, password });
- */
-export async function apiClient<T = any>(
-  path: string,
-  options: ApiClientOptions = {},
-): Promise<T> {
-  const { skipAuth, headers: userHeaders, body, ...opts } = options;
-  const method = (opts.method || 'GET').toUpperCase();
-
-  const url = `${BASE_URL}${path.startsWith('/') ? path : '/' + path}`;
+async function call<T>(path: string, init: RequestInit = {}, opts: { authed?: boolean } = {}): Promise<T> {
   const headers: Record<string, string> = {
-    Accept: 'application/json',
-    ...(userHeaders as Record<string, string> | undefined),
+    'Accept': 'application/json',
+    'Content-Type': 'application/json',
+    'x-nova8-project-key': PROJECT_API_KEY,
+    ...(init.headers as Record<string, string> | undefined),
   };
-
-  // Content-Type for bodied requests
-  const hasBody = body !== undefined && body !== null;
-  if (hasBody && !('Content-Type' in headers) && !('content-type' in headers)) {
-    headers['Content-Type'] = 'application/json';
+  if (opts.authed) {
+    const tok = await getAppToken();
+    if (tok) headers['x-nova8-app-token'] = tok;
   }
-
-  if (!skipAuth) {
-    const tok = await getToken();
-    if (tok) {
-      headers['x-auth-token'] = tok;
-      headers['Authorization'] = `Bearer ${tok}`;
-    }
-  }
-
   let res: Response;
   try {
-    res = await fetch(url, { ...opts, method, headers, body: hasBody ? (body as BodyInit) : undefined });
+    res = await fetch(`${API_BASE}${path}`, { ...init, headers });
   } catch (err: any) {
     const e = new Error(`Network error — ${err?.message || 'fetch failed'}`) as ApiError;
     e.status = 0;
     throw e;
   }
-
-  const contentType = res.headers.get('content-type') || '';
-  const isJson = contentType.includes('application/json');
+  const ct = res.headers.get('content-type') || '';
+  const isJson = ct.includes('application/json');
   const raw = await res.text();
-
-  // Guard: if the backend returned HTML (Expo dev bundler fallback / proxy),
-  // surface a clear error instead of "Unexpected token <".
   if (!isJson && raw.trim().startsWith('<')) {
     const e = new Error(
-      `API returned HTML instead of JSON — check backend is running on :3000 (base=${BASE_URL}).`,
+      `API returned HTML instead of JSON. Base URL (${API_BASE}) may be wrong or the project API key may be missing.`
     ) as ApiError;
     e.status = res.status;
     throw e;
   }
-
-  const parsed = isJson && raw ? safeJson(raw) : raw;
-
+  const body = isJson && raw ? safeJson(raw) : raw;
   if (!res.ok) {
-    const msg =
-      parsed && typeof parsed === 'object' && 'error' in parsed && typeof (parsed as any).error === 'string'
-        ? (parsed as any).error
-        : `API error ${res.status}: ${res.statusText || 'Request failed'}`;
-    const e = new Error(msg) as ApiError;
+    const msg = (body && typeof body === 'object' && ('message' in body || 'error' in body))
+      ? ((body as any).message || (body as any).error)
+      : `HTTP ${res.status}`;
+    const e = new Error(String(msg)) as ApiError;
     e.status = res.status;
-    e.body = parsed;
-    if (parsed && typeof parsed === 'object' && 'detail' in parsed) e.detail = String((parsed as any).detail);
+    e.body = body;
     throw e;
   }
-
-  return parsed as T;
+  return body as T;
 }
 
 function safeJson(s: string): unknown {
-  try {
-    return JSON.parse(s);
-  } catch {
-    return s;
-  }
+  try { return JSON.parse(s); } catch { return s; }
 }
 
-// ─── Ergonomic shorthand ────────────────────────────────────────────────────
+// ─── Ergonomic shorthand ────────────────────────────────────────────
 export const api = {
   get:  <T = any>(path: string, opts?: ApiClientOptions) =>
-    apiClient<T>(path, { ...opts, method: 'GET' }),
+    call<T>(path, { method: 'GET', ...opts }, { authed: !opts?.skipAuth }),
   post: <T = any>(path: string, body?: unknown, opts?: ApiClientOptions) =>
-    apiClient<T>(path, { ...opts, method: 'POST', body: body !== undefined ? JSON.stringify(body) : undefined }),
+    call<T>(path, {
+      method: 'POST',
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+      ...opts,
+    }, { authed: !opts?.skipAuth }),
   put:  <T = any>(path: string, body?: unknown, opts?: ApiClientOptions) =>
-    apiClient<T>(path, { ...opts, method: 'PUT', body: body !== undefined ? JSON.stringify(body) : undefined }),
+    call<T>(path, {
+      method: 'PUT',
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+      ...opts,
+    }, { authed: !opts?.skipAuth }),
   del:  <T = any>(path: string, opts?: ApiClientOptions) =>
-    apiClient<T>(path, { ...opts, method: 'DELETE' }),
-  baseUrl: BASE_URL,
+    call<T>(path, { method: 'DELETE', ...opts }, { authed: !opts?.skipAuth }),
+  baseUrl: API_BASE,
 };
+
+// ─── Legacy apiClient(path, options) shape kept for compatibility ──
+export async function apiClient<T = any>(
+  path: string,
+  options: ApiClientOptions = {},
+): Promise<T> {
+  const { skipAuth, ...rest } = options;
+  return call<T>(path, rest, { authed: !skipAuth });
+}
 
 export default apiClient;
 
-// ─── Auth convenience ───────────────────────────────────────────────────────
+// ─── Auth convenience ───────────────────────────────────────────────
 export interface AuthUser {
   id: string;
   email: string;
   name: string | null;
-  createdAt: number;
+  createdAt?: number | string;
 }
 
 export async function signup(email: string, password: string, name?: string): Promise<AuthUser> {
-  const { token, user } = await api.post<{ token: string; user: AuthUser }>(
-    '/api/app/149/auth/signup',
-    { email, password, name: name ?? null },
-    { skipAuth: true },
+  const { token, user } = await call<{ token: string; user: AuthUser }>(
+    `${AUTH_PREFIX}/signup`,
+    { method: 'POST', body: JSON.stringify({ email, password, name: name ?? null }) },
+    { authed: false },
   );
-  await setToken(token);
-  await setStoredUser(user);
+  await setAppToken(token);
   return user;
 }
 
-export async function login(email: string, password: string): Promise<AuthUser> {
-  const { token, user } = await api.post<{ token: string; user: AuthUser }>(
-    '/api/app/149/auth/login',
-    { email, password },
-    { skipAuth: true },
+export async function signin(email: string, password: string): Promise<AuthUser> {
+  const { token, user } = await call<{ token: string; user: AuthUser }>(
+    `${AUTH_PREFIX}/signin`,
+    { method: 'POST', body: JSON.stringify({ email, password }) },
+    { authed: false },
   );
-  await setToken(token);
-  await setStoredUser(user);
+  await setAppToken(token);
   return user;
 }
+
+// Alias kept so callers that imported 'login' keep working after the
+// audit repairs their apiClient. Under the hood it's signin.
+export const login = signin;
 
 export async function logout(): Promise<void> {
-  try { await api.post('/api/app/149/auth/logout'); } catch {}
-  await setToken(null);
-  await setStoredUser(null);
+  try {
+    await call(`${AUTH_PREFIX}/logout`, { method: 'POST' }, { authed: true });
+  } catch {}
+  await setAppToken(null);
 }
 
 export async function me(): Promise<AuthUser | null> {
   try {
-    const { user } = await api.get<{ user: AuthUser }>('/api/app/149/auth/me');
-    await setStoredUser(user);
+    const { user } = await call<{ user: AuthUser }>(
+      `${AUTH_PREFIX}/me`,
+      { method: 'GET' },
+      { authed: true },
+    );
     return user;
   } catch {
     return null;
   }
+}
+
+export async function deleteAccount(): Promise<void> {
+  await call(`${AUTH_PREFIX}/me`, { method: 'DELETE' }, { authed: true });
+  await setAppToken(null);
 }
