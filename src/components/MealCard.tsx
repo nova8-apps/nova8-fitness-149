@@ -83,8 +83,7 @@ export function MealCard({ meal, onPress, onDelete }: MealCardProps) {
             style={{ marginLeft: 8, padding: 8 }}
             onPress={() => { hapticLight(); onDelete(); }}
             accessibilityLabel={`Delete meal ${meal.name}`}
-            testID={`delete-meal-${meal.id}`}
-          >
+            testID={`delete-meal-${meal.id}`} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
             <Trash2 size={18} color="#E05555" />
           </Pressable>
         )}

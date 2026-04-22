@@ -55,7 +55,7 @@ export default function SignUpScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={{ paddingTop: insets.top + 20, marginBottom: 20 }}>
-          <Pressable onPress={() => router.back()} accessibilityLabel="Go back" testID="back-btn" style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border }}>
+          <Pressable onPress={() => router.back()} accessibilityLabel="Go back" testID="back-btn" style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border }} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
             <ArrowLeft size={20} color={colors.textPrimary} />
           </Pressable>
         </View>

@@ -162,8 +162,7 @@ export default function HomeScreen() {
             backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center',
             shadowColor: colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 12,
             elevation: 8,
-          }}
-        >
+          }} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
           <Plus size={28} color="#fff" />
         </Pressable>
       </Animated.View>

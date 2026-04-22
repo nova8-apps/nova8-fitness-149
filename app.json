@@ -22,7 +22,8 @@
         "NSLocationWhenInUseUsageDescription": "This app uses your location to track your routes and distance.",
         "ITSAppUsesNonExemptEncryption": false
       },
-      "buildNumber": "1"
+      "buildNumber": "1",
+      "privacyPolicyUrl": "https://nova8.dev/privacy/149"
     },
     "android": {
       "adaptiveIcon": {
@@ -49,7 +50,8 @@
     "extra": {
       "apiBaseUrl": "https://nova8.dev",
       "projectId": 149,
-      "projectApiKey": "nv8pk_WzlqCANDB0SnXkoKucr6pZ8AcEiIaYlzYRzqC7ng624"
+      "projectApiKey": "nv8pk_WzlqCANDB0SnXkoKucr6pZ8AcEiIaYlzYRzqC7ng624",
+      "privacyPolicyUrl": "https://nova8.dev/privacy/149"
     }
   }
 }

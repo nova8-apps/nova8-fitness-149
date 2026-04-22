@@ -82,7 +82,7 @@ export default function LibraryScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <View style={{ paddingTop: 56, paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 16 }}>
-        <Pressable onPress={() => router.back()} accessibilityLabel="Go back" testID="library-back" style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border }}>
+        <Pressable onPress={() => router.back()} accessibilityLabel="Go back" testID="library-back" style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border }} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
           <ArrowLeft size={20} color={colors.textPrimary} />
         </Pressable>
         <Text style={{ fontSize: 20, fontWeight: '700', color: colors.textPrimary }}>Food Library</Text>
@@ -108,8 +108,7 @@ export default function LibraryScreen() {
         renderItem={renderItem}
         keyExtractor={item => item.id}
         contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40 }}
-        showsVerticalScrollIndicator={false}
-      />
+        showsVerticalScrollIndicator={false} windowSize={10} maxToRenderPerBatch={10} initialNumToRender={10} removeClippedSubviews={true} />
     </View>
   );
 }

@@ -51,8 +51,7 @@ export default function PaywallScreen() {
             onPress={() => router.back()}
             accessibilityLabel="Close paywall"
             testID="close-paywall"
-            style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: colors.surfaceElevated, alignItems: 'center', justifyContent: 'center' }}
-          >
+            style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: colors.surfaceElevated, alignItems: 'center', justifyContent: 'center' }} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
             <X size={18} color={colors.textSecondary} />
           </Pressable>
 

@@ -72,7 +72,7 @@ export default function BarcodeScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg, paddingHorizontal: 20 }}>
       <View style={{ paddingTop: 56, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-        <Pressable onPress={() => router.back()} accessibilityLabel="Go back" testID="barcode-back" style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border }}>
+        <Pressable onPress={() => router.back()} accessibilityLabel="Go back" testID="barcode-back" style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border }} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
           <ArrowLeft size={20} color={colors.textPrimary} />
         </Pressable>
         <Text style={{ fontSize: 20, fontWeight: '700', color: colors.textPrimary }}>Barcode Scanner</Text>

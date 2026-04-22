@@ -80,11 +80,11 @@ export default function ReviewScreen() {
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       {/* Header */}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 56, paddingBottom: 12 }}>
-        <Pressable onPress={() => router.back()} accessibilityLabel="Go back" testID="review-back" style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border }}>
+        <Pressable onPress={() => router.back()} accessibilityLabel="Go back" testID="review-back" style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border }} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
           <ArrowLeft size={20} color={colors.textPrimary} />
         </Pressable>
         <Text style={{ fontSize: 17, fontWeight: '700', color: colors.textPrimary }}>Create Meal</Text>
-        <Pressable accessibilityLabel="Share" testID="review-share" style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border }}>
+        <Pressable accessibilityLabel="Share" testID="review-share" style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border }} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
           <Share2 size={18} color={colors.textSecondary} />
         </Pressable>
       </View>
@@ -102,7 +102,7 @@ export default function ReviewScreen() {
                 accessibilityLabel="Edit meal name"
                 testID="meal-name-input"
               />
-              <Pressable onPress={() => setEditing(false)} accessibilityLabel="Done editing" testID="done-editing">
+              <Pressable onPress={() => setEditing(false)} accessibilityLabel="Done editing" testID="done-editing" hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
                 <Check size={20} color={colors.primary} />
               </Pressable>
             </View>
@@ -150,7 +150,7 @@ export default function ReviewScreen() {
               <Text style={{ fontSize: 15, fontWeight: '600', color: colors.textPrimary }}>{item.name}</Text>
               <Text style={{ fontSize: 12, color: colors.textSecondary, marginTop: 2 }}>{item.quantity}{item.unit} · {item.calories} kcal</Text>
             </View>
-            <Pressable onPress={() => deleteItem(item.id)} accessibilityLabel={`Delete ${item.name}`} testID={`delete-item-${item.id}`} style={{ padding: 8 }}>
+            <Pressable onPress={() => deleteItem(item.id)} accessibilityLabel={`Delete ${item.name}`} testID={`delete-item-${item.id}`} style={{ padding: 8 }} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
               <Trash2 size={16} color="#E05555" />
             </Pressable>
           </View>
@@ -165,8 +165,7 @@ export default function ReviewScreen() {
             flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
             borderWidth: 2, borderColor: colors.border, borderStyle: 'dashed',
             borderRadius: 16, paddingVertical: 14, marginTop: 4,
-          }}
-        >
+          }} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
           <Plus size={18} color={colors.textSecondary} />
           <Text style={{ fontSize: 14, fontWeight: '600', color: colors.textSecondary }}>Add items to this meal</Text>
         </Pressable>
