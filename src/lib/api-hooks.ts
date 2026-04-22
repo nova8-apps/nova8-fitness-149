@@ -61,7 +61,7 @@ interface VisionLabelResult {
 // ─── Auth (not hooks — called directly) ───────────────
 
 export async function loginApi(email: string, password: string): Promise<AuthResponse> {
-  return apiClient<AuthResponse>('/api/auth/login', {
+  return apiClient<AuthResponse>('/api/app/149/auth/login', {
     method: 'POST',
     body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
     skipAuth: true,
@@ -69,7 +69,7 @@ export async function loginApi(email: string, password: string): Promise<AuthRes
 }
 
 export async function signupApi(email: string, password: string, name?: string): Promise<AuthResponse> {
-  return apiClient<AuthResponse>('/api/auth/signup', {
+  return apiClient<AuthResponse>('/api/app/149/auth/signup', {
     method: 'POST',
     body: JSON.stringify({ email: email.trim().toLowerCase(), password, name }),
     skipAuth: true,
@@ -77,7 +77,7 @@ export async function signupApi(email: string, password: string, name?: string):
 }
 
 export async function logoutApi(): Promise<void> {
-  await apiClient('/api/auth/logout', { method: 'POST' });
+  await apiClient('/api/app/149/auth/logout', { method: 'POST' });
 }
 
 // ─── User / Me ────────────────────────────────────────

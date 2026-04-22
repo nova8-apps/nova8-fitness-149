@@ -114,15 +114,15 @@ export interface ApiClientOptions extends RequestInit {
  * Canonical fetch wrapper — the one every screen should call.
  *
  * Usage (both supported):
- *   const data = await apiClient<User>('/api/auth/me');
- *   const data = await apiClient<AuthResp>('/api/auth/login', {
+ *   const data = await apiClient<User>('/api/app/149/auth/me');
+ *   const data = await apiClient<AuthResp>('/api/app/149/auth/login', {
  *     method: 'POST',
  *     body: JSON.stringify({ email, password }),
  *     skipAuth: true,
  *   });
  *
  * Or via the ergonomic shorthand:
- *   const data = await api.post<AuthResp>('/api/auth/login', { email, password });
+ *   const data = await api.post<AuthResp>('/api/app/149/auth/login', { email, password });
  */
 export async function apiClient<T = any>(
   path: string,
@@ -224,7 +224,7 @@ export interface AuthUser {
 
 export async function signup(email: string, password: string, name?: string): Promise<AuthUser> {
   const { token, user } = await api.post<{ token: string; user: AuthUser }>(
-    '/api/auth/signup',
+    '/api/app/149/auth/signup',
     { email, password, name: name ?? null },
     { skipAuth: true },
   );
@@ -235,7 +235,7 @@ export async function signup(email: string, password: string, name?: string): Pr
 
 export async function login(email: string, password: string): Promise<AuthUser> {
   const { token, user } = await api.post<{ token: string; user: AuthUser }>(
-    '/api/auth/login',
+    '/api/app/149/auth/login',
     { email, password },
     { skipAuth: true },
   );
@@ -245,14 +245,14 @@ export async function login(email: string, password: string): Promise<AuthUser> 
 }
 
 export async function logout(): Promise<void> {
-  try { await api.post('/api/auth/logout'); } catch {}
+  try { await api.post('/api/app/149/auth/logout'); } catch {}
   await setToken(null);
   await setStoredUser(null);
 }
 
 export async function me(): Promise<AuthUser | null> {
   try {
-    const { user } = await api.get<{ user: AuthUser }>('/api/auth/me');
+    const { user } = await api.get<{ user: AuthUser }>('/api/app/149/auth/me');
     await setStoredUser(user);
     return user;
   } catch {

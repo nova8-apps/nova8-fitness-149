@@ -19,8 +19,10 @@
       "infoPlist": {
         "NSCameraUsageDescription": "This app uses your camera to record workout videos and check your form.",
         "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to let you select images.",
-        "NSLocationWhenInUseUsageDescription": "This app uses your location to track your routes and distance."
-      }
+        "NSLocationWhenInUseUsageDescription": "This app uses your location to track your routes and distance.",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "buildNumber": "1"
     },
     "android": {
       "adaptiveIcon": {
@@ -45,7 +47,9 @@
       "web"
     ],
     "extra": {
-      "apiBaseUrl": "https://3000-ik637h2pwlm7e4lovd8ca.e2b.app"
+      "apiBaseUrl": "https://nova8.dev",
+      "projectId": 149,
+      "projectApiKey": "nv8pk_WzlqCANDB0SnXkoKucr6pZ8AcEiIaYlzYRzqC7ng624"
     }
   }
 }
