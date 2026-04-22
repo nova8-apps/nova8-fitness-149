@@ -43,6 +43,9 @@
       "ios",
       "android",
       "web"
-    ]
+    ],
+    "extra": {
+      "apiBaseUrl": "https://3000-ik637h2pwlm7e4lovd8ca.e2b.app"
+    }
   }
 }
