@@ -1,14 +1,20 @@
 import { db } from './server/db';
-import { users } from './db/schema';
+
+type User = {
+  id: string;
+  email: string;
+  name: string | null;
+  created_at: number;
+};
 
 async function checkUsers() {
-  const allUsers = await db.select().from(users);
+  const allUsers = db.prepare('SELECT * FROM users').all() as User[];
   console.log('Total users:', allUsers.length);
-  console.log('Users:', JSON.stringify(allUsers.map(u => ({
+  console.log('Users:', JSON.stringify(allUsers.map((u: User) => ({
     id: u.id,
     email: u.email,
     name: u.name,
-    createdAt: u.createdAt
+    createdAt: u.created_at
   })), null, 2));
 }
 

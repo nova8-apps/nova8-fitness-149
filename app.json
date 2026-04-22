@@ -23,12 +23,14 @@
         "ITSAppUsesNonExemptEncryption": false
       },
       "buildNumber": "1",
-      "privacyPolicyUrl": "https://nova8.dev/privacy/149"
+      "privacyPolicyUrl": "https://nova8.dev/privacy/149",
+      "icon": "./assets/icon.png",
+      "usesAppleSignIn": true
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/icon.png",
-        "backgroundColor": "#f97316"
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
       },
       "package": "com.nova8.fitnessapp"
     },

@@ -9,6 +9,7 @@
 
 import { Router, Request, Response } from 'express';
 import crypto from 'crypto';
+import OpenAI from 'openai';
 import { db, now } from './db';
 import {
   AuthedRequest,
@@ -124,13 +125,60 @@ router.post('/auth/logout', requireAuth, (req: AuthedRequest, res: Response) => 
 router.get('/auth/me', requireAuth, (req: AuthedRequest, res: Response) => {
   const user = getUserById(req.userId!);
   if (!user) return res.status(404).json({ error: 'User not found' });
-  return res.json({ user });
+  const goals = db.prepare('SELECT * FROM user_goals WHERE user_id = ?').get(req.userId!) || null;
+  const streak = db.prepare('SELECT * FROM streaks WHERE user_id = ?').get(req.userId!) || null;
+  const entitlement = db.prepare('SELECT * FROM entitlements WHERE user_id = ?').get(req.userId!) || null;
+  return res.json({ user, goals, streak, entitlement });
 });
 
 // ── User goals ────────────────────────────────────────────────────────────
 router.get('/user/goals', requireAuth, (req: AuthedRequest, res: Response) => {
   const row = db.prepare('SELECT * FROM user_goals WHERE user_id = ?').get(req.userId!);
   return res.json({ goals: row || null });
+});
+
+router.post('/user/goals', requireAuth, (req: AuthedRequest, res: Response) => {
+  try {
+    const g = req.body || {};
+    const ts = now();
+    db.prepare(
+      `UPDATE user_goals SET
+         goal_type = COALESCE(?, goal_type),
+         activity_level = COALESCE(?, activity_level),
+         sex = COALESCE(?, sex),
+         birth_date = COALESCE(?, birth_date),
+         height_cm = COALESCE(?, height_cm),
+         start_weight_kg = COALESCE(?, start_weight_kg),
+         current_weight_kg = COALESCE(?, current_weight_kg),
+         target_weight_kg = COALESCE(?, target_weight_kg),
+         daily_calories = COALESCE(?, daily_calories),
+         protein_g = COALESCE(?, protein_g),
+         carbs_g = COALESCE(?, carbs_g),
+         fat_g = COALESCE(?, fat_g),
+         updated_at = ?
+       WHERE user_id = ?`,
+    ).run(
+      g.goalType ?? null,
+      g.activityLevel ?? null,
+      g.sex ?? null,
+      g.birthDate ?? null,
+      g.heightCm ?? null,
+      g.startWeightKg ?? null,
+      g.currentWeightKg ?? null,
+      g.targetWeightKg ?? null,
+      g.dailyCalories ?? null,
+      g.proteinG ?? null,
+      g.carbsG ?? null,
+      g.fatG ?? null,
+      ts,
+      req.userId!,
+    );
+    const row = db.prepare('SELECT * FROM user_goals WHERE user_id = ?').get(req.userId!);
+    return res.json({ goals: row });
+  } catch (err: any) {
+    console.error('[user/goals POST] error:', err?.message || err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 router.put('/user/goals', requireAuth, (req: AuthedRequest, res: Response) => {
@@ -314,6 +362,132 @@ router.get('/foods/search', requireAuth, (req: Request, res: Response) => {
     .prepare('SELECT * FROM foods WHERE name LIKE ? ORDER BY name LIMIT 40')
     .all(`%${q}%`);
   return res.json({ foods: rows });
+});
+
+// ── Vision (OpenAI GPT-4o image analysis) ─────────────────────────────────
+router.post('/vision/analyze', requireAuth, async (req: AuthedRequest, res: Response) => {
+  try {
+    const { imageBase64, mode } = req.body || {};
+    if (!imageBase64) {
+      return res.status(400).json({ error: 'imageBase64 required' });
+    }
+
+    const openaiKey = process.env.OPENAI_API_KEY;
+    if (!openaiKey) {
+      console.warn('[vision] OPENAI_API_KEY not set — returning mock data');
+      // Fallback to mock data when no API key
+      if (mode === 'label') {
+        return res.json({
+          servingSize: '1 serving (100g)',
+          caloriesPerServing: 200,
+          proteinG: 8,
+          carbsG: 30,
+          fatG: 5,
+          sodiumMg: 300,
+        });
+      }
+      return res.json({
+        meal: {
+          name: 'Analyzed Meal',
+          totalCalories: 520,
+          proteinG: 38,
+          carbsG: 45,
+          fatG: 18,
+          items: [
+            { name: 'Protein', calories: 280, proteinG: 35, carbsG: 2, fatG: 8, quantity: 200, unit: 'g' },
+            { name: 'Carbs', calories: 160, proteinG: 3, carbsG: 35, fatG: 1, quantity: 150, unit: 'g' },
+            { name: 'Vegetables', calories: 80, proteinG: 0, carbsG: 8, fatG: 9, quantity: 100, unit: 'g' },
+          ],
+        },
+      });
+    }
+
+    const openai = new OpenAI({ apiKey: openaiKey });
+
+    if (mode === 'label') {
+      // Analyze nutrition label
+      const completion = await openai.chat.completions.create({
+        model: 'gpt-4o',
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: `Extract nutrition facts from this food label image. Return JSON only with this exact structure:
+{
+  "servingSize": "serving size text",
+  "caloriesPerServing": number,
+  "proteinG": number,
+  "carbsG": number,
+  "fatG": number,
+  "sodiumMg": number
+}`,
+              },
+              {
+                type: 'image_url',
+                image_url: { url: `data:image/jpeg;base64,${imageBase64}` },
+              },
+            ],
+          },
+        ],
+        max_tokens: 500,
+      });
+
+      const content = completion.choices[0]?.message?.content?.trim() || '{}';
+      const parsed = JSON.parse(content);
+      return res.json(parsed);
+    }
+
+    // Default: analyze food meal
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'text',
+              text: `Analyze this food image and identify all food items with their nutritional content. Return JSON only with this exact structure:
+{
+  "meal": {
+    "name": "brief meal name",
+    "totalCalories": number,
+    "proteinG": number,
+    "carbsG": number,
+    "fatG": number,
+    "items": [
+      {
+        "name": "food item name",
+        "calories": number,
+        "proteinG": number,
+        "carbsG": number,
+        "fatG": number,
+        "quantity": number,
+        "unit": "g or ml or serving"
+      }
+    ]
+  }
+}
+Be accurate with nutritional values. Include all visible food items.`,
+            },
+            {
+              type: 'image_url',
+              image_url: { url: `data:image/jpeg;base64,${imageBase64}` },
+            },
+          ],
+        },
+      ],
+      max_tokens: 1000,
+    });
+
+    const content = completion.choices[0]?.message?.content?.trim() || '{}';
+    const parsed = JSON.parse(content);
+    return res.json(parsed);
+  } catch (err: any) {
+    console.error('[vision] error:', err?.message || err);
+    return res.status(500).json({ error: 'Vision analysis failed', detail: String(err?.message || err) });
+  }
 });
 
 export default router;

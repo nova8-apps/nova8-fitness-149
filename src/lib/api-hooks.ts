@@ -61,7 +61,7 @@ interface VisionLabelResult {
 // ─── Auth (not hooks — called directly) ───────────────
 
 export async function loginApi(email: string, password: string): Promise<AuthResponse> {
-  return apiClient<AuthResponse>('/api/app/149/auth/login', {
+  return apiClient<AuthResponse>('/api/app/149/auth/signin', {
     method: 'POST',
     body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
     skipAuth: true,
@@ -85,7 +85,7 @@ export async function logoutApi(): Promise<void> {
 export function useMe() {
   return useQuery<MeResponse>({
     queryKey: ['me'],
-    queryFn: () => apiClient<MeResponse>('/api/user/me'),
+    queryFn: () => apiClient<MeResponse>('/api/app/149/auth/me'),
     staleTime: 5 * 60 * 1000,
     retry: 1,
   });

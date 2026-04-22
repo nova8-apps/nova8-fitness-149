@@ -22,6 +22,7 @@ export default function RootLayout() {
                 <Stack.Screen name="auth/sign-up" />
                 <Stack.Screen name="onboarding" />
                 <Stack.Screen name="paywall" options={{ presentation: 'modal' }} />
+                <Stack.Screen name="delete-account" options={{ presentation: 'modal' }} />
                 <Stack.Screen name="(tabs)" />
                 <Stack.Screen name="capture" />
                 <Stack.Screen name="exercise" />

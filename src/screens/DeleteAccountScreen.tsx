@@ -9,7 +9,7 @@ import {
   View,
   ActivityIndicator,
 } from "react-native";
-import { apiClient } from "../lib/apiClient";
+import { deleteAccount } from "../lib/apiClient";
 import { clearSession } from "../lib/session";
 
 /**
@@ -44,7 +44,7 @@ export default function DeleteAccountScreen({ navigation }: any) {
   const handleDelete = async () => {
     setBusy(true);
     try {
-      await apiClient.delete("/auth/me");
+      await deleteAccount();
       await clearSession();
       Alert.alert(
         "Account deleted",

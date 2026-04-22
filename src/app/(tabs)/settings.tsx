@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, Pressable, ScrollView, TextInput, Switch } from 'react-native';
+import { View, Pressable, ScrollView, TextInput, Switch, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import Constants from 'expo-constants';
 import { Text } from '@/components/ui/text';
 import { User, Target, Ruler, Bell, LogOut, Trash2, ChevronRight, Crown, Scale, Info, Shield, Mail } from 'lucide-react-native';
 import { PillButton } from '@/components/PillButton';
@@ -55,8 +56,6 @@ export default function SettingsScreen() {
   const [showWeightInput, setShowWeightInput] = useState<boolean>(false);
   const [weightInput, setWeightInput] = useState<string>(String(goals?.currentWeightKg ?? 75));
 
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false);
-
   const handleSaveGoals = () => {
     goalsMutation.mutate({
       calorieTarget: parseInt(editCal) || 2000,
@@ -81,6 +80,18 @@ export default function SettingsScreen() {
     hapticWarning();
     signOut();
     router.replace('/auth/sign-in');
+  };
+
+  const handlePrivacyPolicy = () => {
+    hapticLight();
+    const extra = (Constants?.expoConfig?.extra ?? {}) as Record<string, any>;
+    const privacyUrl = String(extra.privacyPolicyUrl || process.env.EXPO_PUBLIC_PRIVACY_POLICY_URL || 'https://nova8.dev/privacy/149');
+    Linking.openURL(privacyUrl);
+  };
+
+  const handleSupport = () => {
+    hapticLight();
+    Linking.openURL('mailto:support@macr.app');
   };
 
   const initials = user?.name ? user.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'U';
@@ -206,37 +217,19 @@ export default function SettingsScreen() {
             )}
             <SettingRow icon={LogOut} label="Sign Out" onPress={handleSignOut} color="#E05555" />
             <View style={{ height: 1, backgroundColor: colors.border }} />
-            <SettingRow icon={Trash2} label="Delete Account" onPress={() => { hapticWarning(); setShowDeleteConfirm(true); }} color="#E05555" />
+            <SettingRow icon={Trash2} label="Delete Account" onPress={() => { hapticWarning(); router.push('/delete-account' as any); }} color="#E05555" />
           </View>
         </View>
-
-        {/* Delete Confirmation */}
-        {showDeleteConfirm && (
-          <View style={{ paddingHorizontal: 20, marginTop: 12 }}>
-            <View style={{ backgroundColor: '#FEE2E2', borderRadius: 18, padding: 20 }}>
-              <Text style={{ fontSize: 16, fontWeight: '700', color: '#DC2626', marginBottom: 8 }}>Delete Account?</Text>
-              <Text style={{ fontSize: 14, color: '#991B1B', marginBottom: 16 }}>This will permanently delete all your data. This action cannot be undone.</Text>
-              <View style={{ flexDirection: 'row', gap: 10 }}>
-                <Pressable onPress={() => setShowDeleteConfirm(false)} accessibilityLabel="Cancel delete" testID="cancel-delete" style={{ flex: 1, paddingVertical: 12, borderRadius: 12, alignItems: 'center', backgroundColor: '#fff' }}>
-                  <Text style={{ fontSize: 14, fontWeight: '600', color: colors.textPrimary }}>Cancel</Text>
-                </Pressable>
-                <Pressable onPress={handleSignOut} accessibilityLabel="Confirm delete" testID="confirm-delete" style={{ flex: 1, paddingVertical: 12, borderRadius: 12, alignItems: 'center', backgroundColor: '#DC2626' }}>
-                  <Text style={{ fontSize: 14, fontWeight: '600', color: '#fff' }}>Delete</Text>
-                </Pressable>
-              </View>
-            </View>
-          </View>
-        )}
 
         {/* About */}
         <View style={{ paddingHorizontal: 20, marginTop: 24 }}>
           <Text style={{ fontSize: 13, fontWeight: '700', color: colors.textSecondary, letterSpacing: 0.5, marginBottom: 10 }}>ABOUT</Text>
           <View style={{ backgroundColor: colors.surface, borderRadius: 18, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 16 }}>
-            <SettingRow icon={Shield} label="Privacy Policy" color={colors.fat} />
+            <SettingRow icon={Shield} label="Privacy Policy" onPress={handlePrivacyPolicy} color={colors.fat} />
             <View style={{ height: 1, backgroundColor: colors.border }} />
-            <SettingRow icon={Info} label="Terms of Service" color={colors.fat} />
+            <SettingRow icon={Info} label="Terms of Service" onPress={handlePrivacyPolicy} color={colors.fat} />
             <View style={{ height: 1, backgroundColor: colors.border }} />
-            <SettingRow icon={Mail} label="Support" value="support@macr.app" color={colors.protein} />
+            <SettingRow icon={Mail} label="Support" value="support@macr.app" onPress={handleSupport} color={colors.protein} />
             <View style={{ height: 1, backgroundColor: colors.border }} />
             <View style={{ paddingVertical: 14, paddingHorizontal: 4 }}>
               <Text style={{ fontSize: 13, color: colors.textSecondary }}>Macr v1.0.0 · Built with Nova8</Text>

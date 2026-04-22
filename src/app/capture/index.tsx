@@ -81,26 +81,6 @@ export default function CaptureScreen() {
     }
   };
 
-  const handleQuickDemo = () => {
-    hapticMedium();
-    const mockMeal = {
-      name: 'Grilled Chicken Bowl',
-      totalCalories: 485,
-      proteinG: 42,
-      carbsG: 38,
-      fatG: 16,
-      items: [
-        { id: '1', name: 'Grilled Chicken', calories: 250, proteinG: 35, carbsG: 0, fatG: 8, quantity: 180, unit: 'g' },
-        { id: '2', name: 'Brown Rice', calories: 150, proteinG: 3, carbsG: 32, fatG: 1, quantity: 120, unit: 'g' },
-        { id: '3', name: 'Mixed Vegetables', calories: 55, proteinG: 3, carbsG: 6, fatG: 2, quantity: 100, unit: 'g' },
-        { id: '4', name: 'Olive Oil Drizzle', calories: 30, proteinG: 0, carbsG: 0, fatG: 5, quantity: 5, unit: 'ml' },
-      ],
-      eatenAt: new Date().toISOString(),
-    };
-    setPendingMeal(mockMeal);
-    router.push('/capture/analyzing');
-  };
-
   return (
     <View style={{ flex: 1, backgroundColor: '#000' }}>
       {/* Top bar */}
@@ -168,14 +148,6 @@ export default function CaptureScreen() {
           }}
         >
           <View style={{ width: 58, height: 58, borderRadius: 29, backgroundColor: colors.primary }} />
-        </Pressable>
-        <Pressable
-          onPress={handleQuickDemo}
-          accessibilityLabel="Quick demo scan"
-          testID="quick-demo"
-          style={{ marginTop: 16 }}
-        >
-          <Text style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', fontWeight: '500' }}>Try demo scan</Text>
         </Pressable>
       </View>
     </View>

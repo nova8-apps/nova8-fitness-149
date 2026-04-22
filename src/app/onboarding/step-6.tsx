@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator, Pressable } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withDelay, withSpring } from 'react-native-reanimated';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Text } from '@/components/ui/text';
 import { ScrollView } from '@/components/ui/scroll-view';
-import { Sparkles, Flame, Beef, Wheat, Droplets } from 'lucide-react-native';
+import { Sparkles, Flame, Beef, Wheat, Droplets, ChevronLeft } from 'lucide-react-native';
 import { PillButton } from '@/components/PillButton';
 import { useAppStore } from '@/lib/store';
 import { useGoalsMutation } from '@/lib/api-hooks';
 import { colors } from '@/lib/theme';
-import { hapticSuccess } from '@/lib/haptics';
+import { hapticSuccess, hapticLight } from '@/lib/haptics';
 
 function calculateGoals(params: Record<string, string>): { calories: number; protein: number; carbs: number; fat: number } {
   const sex = params.sex || 'male';
@@ -70,11 +70,11 @@ export default function OnboardingStep6() {
     if (!targets) return;
     try {
       await goalsMutation.mutateAsync({
-        calorieTarget: targets.calories,
-        proteinTarget: targets.protein,
-        carbTarget: targets.carbs,
-        fatTarget: targets.fat,
-        weightTargetKg: parseFloat(params.targetWeightKg || '70'),
+        dailyCalories: targets.calories,
+        proteinG: targets.protein,
+        carbsG: targets.carbs,
+        fatG: targets.fat,
+        targetWeightKg: parseFloat(params.targetWeightKg || '70'),
         activityLevel: (params.activity || 'moderate') as 'sedentary' | 'light' | 'moderate' | 'very_active',
       });
       setOnboarded(true);
@@ -95,6 +95,17 @@ export default function OnboardingStep6() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
+      {!calculating && (
+        <Pressable
+          onPress={() => { hapticLight(); router.back(); }}
+          accessibilityLabel="Go back"
+          testID="back-button"
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          style={{ position: 'absolute', top: 50, left: 20, zIndex: 10, width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border }}
+        >
+          <ChevronLeft size={24} color={colors.textPrimary} />
+        </Pressable>
+      )}
       {calculating ? (
         <View style={{ flex: 1 }}>
           <View style={{ paddingHorizontal: 24, paddingTop: 70, marginBottom: 8 }}>
@@ -113,7 +124,7 @@ export default function OnboardingStep6() {
         </View>
       ) : (
         <>
-          <ScrollView contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 100 }}>
+          <ScrollView contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 40 }}>
             <View style={{ paddingTop: 70, marginBottom: 8 }}>
               <View style={{ height: 4, borderRadius: 2, backgroundColor: colors.border }}>
                 <View style={{ height: 4, borderRadius: 2, backgroundColor: colors.primary, width: '100%' }} />

@@ -4,7 +4,7 @@ import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-na
 import { router, useLocalSearchParams } from 'expo-router';
 import { Text } from '@/components/ui/text';
 import { ScrollView } from '@/components/ui/scroll-view';
-import { Armchair, Footprints, Bike, Zap } from 'lucide-react-native';
+import { Armchair, Footprints, Bike, Zap, ChevronLeft } from 'lucide-react-native';
 import { PillButton } from '@/components/PillButton';
 import { colors } from '@/lib/theme';
 import { hapticLight } from '@/lib/haptics';
@@ -22,7 +22,16 @@ export default function OnboardingStep2() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 100 }}>
+      <Pressable
+        onPress={() => { hapticLight(); router.back(); }}
+        accessibilityLabel="Go back"
+        testID="back-button"
+        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        style={{ position: 'absolute', top: 50, left: 20, zIndex: 10, width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border }}
+      >
+        <ChevronLeft size={24} color={colors.textPrimary} />
+      </Pressable>
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 40 }}>
         <View style={{ paddingTop: 70, marginBottom: 8 }}>
           <View style={{ height: 4, borderRadius: 2, backgroundColor: colors.border }}>
             <View style={{ height: 4, borderRadius: 2, backgroundColor: colors.primary, width: '33%' }} />
